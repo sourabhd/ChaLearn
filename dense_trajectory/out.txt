@@ -1,0 +1,165 @@
+Learning the model
+	 Processing file Seq02.zip
+1 15 38
+trainingVideos/Seq02/output_Seq02_1_frame15-38.avi
+2 62 104
+trainingVideos/Seq02/output_Seq02_2_frame62-104.avi
+3 110 148
+trainingVideos/Seq02/output_Seq02_3_frame110-148.avi
+5 147 156
+trainingVideos/Seq02/output_Seq02_5_frame147-156.avi
+5 157 162
+trainingVideos/Seq02/output_Seq02_5_frame157-162.avi
+5 163 168
+trainingVideos/Seq02/output_Seq02_5_frame163-168.avi
+4 188 205
+trainingVideos/Seq02/output_Seq02_4_frame188-205.avi
+6 295 317
+trainingVideos/Seq02/output_Seq02_6_frame295-317.avi
+6 321 362
+trainingVideos/Seq02/output_Seq02_6_frame321-362.avi
+6 370 413
+trainingVideos/Seq02/output_Seq02_6_frame370-413.avi
+7 417 440
+trainingVideos/Seq02/output_Seq02_7_frame417-440.avi
+7 457 475
+trainingVideos/Seq02/output_Seq02_7_frame457-475.avi
+7 482 505
+trainingVideos/Seq02/output_Seq02_7_frame482-505.avi
+6 514 537
+trainingVideos/Seq02/output_Seq02_6_frame514-537.avi
+2 520 540
+trainingVideos/Seq02/output_Seq02_2_frame520-540.avi
+8 582 620
+trainingVideos/Seq02/output_Seq02_8_frame582-620.avi
+9 621 672
+trainingVideos/Seq02/output_Seq02_9_frame621-672.avi
+10 673 715
+trainingVideos/Seq02/output_Seq02_10_frame673-715.avi
+11 720 781
+trainingVideos/Seq02/output_Seq02_11_frame720-781.avi
+6 790 823
+trainingVideos/Seq02/output_Seq02_6_frame790-823.avi
+6 578 596
+trainingVideos/Seq02/output_Seq02_6_frame578-596.avi
+8 583 616
+trainingVideos/Seq02/output_Seq02_8_frame583-616.avi
+9 617 672
+trainingVideos/Seq02/output_Seq02_9_frame617-672.avi
+10 675 711
+trainingVideos/Seq02/output_Seq02_10_frame675-711.avi
+11 712 777
+trainingVideos/Seq02/output_Seq02_11_frame712-777.avi
+6 785 796
+trainingVideos/Seq02/output_Seq02_6_frame785-796.avi
+6 830 861
+trainingVideos/Seq02/output_Seq02_6_frame830-861.avi
+	 Processing file Seq03.zip
+6 12 40
+trainingVideos/Seq03/output_Seq03_6_frame12-40.avi
+1 28 58
+trainingVideos/Seq03/output_Seq03_1_frame28-58.avi
+1 67 79
+trainingVideos/Seq03/output_Seq03_1_frame67-79.avi
+2 128 158
+trainingVideos/Seq03/output_Seq03_2_frame128-158.avi
+3 188 227
+trainingVideos/Seq03/output_Seq03_3_frame188-227.avi
+5 256 265
+trainingVideos/Seq03/output_Seq03_5_frame256-265.avi
+5 266 274
+trainingVideos/Seq03/output_Seq03_5_frame266-274.avi
+5 305 318
+trainingVideos/Seq03/output_Seq03_5_frame305-318.avi
+4 361 389
+trainingVideos/Seq03/output_Seq03_4_frame361-389.avi
+6 521 554
+trainingVideos/Seq03/output_Seq03_6_frame521-554.avi
+6 568 631
+trainingVideos/Seq03/output_Seq03_6_frame568-631.avi
+6 639 706
+trainingVideos/Seq03/output_Seq03_6_frame639-706.avi
+7 744 776
+trainingVideos/Seq03/output_Seq03_7_frame744-776.avi
+7 792 823
+trainingVideos/Seq03/output_Seq03_7_frame792-823.avi
+6 837 888
+trainingVideos/Seq03/output_Seq03_6_frame837-888.avi
+8 900 946
+trainingVideos/Seq03/output_Seq03_8_frame900-946.avi
+9 951 991
+trainingVideos/Seq03/output_Seq03_9_frame951-991.avi
+11 1009 1059
+trainingVideos/Seq03/output_Seq03_11_frame1009-1059.avi
+10 1072 1105
+trainingVideos/Seq03/output_Seq03_10_frame1072-1105.avi
+6 1128 1145
+trainingVideos/Seq03/output_Seq03_6_frame1128-1145.avi
+3 1149 1155
+trainingVideos/Seq03/output_Seq03_3_frame1149-1155.avi
+6 1149 1155
+trainingVideos/Seq03/output_Seq03_6_frame1149-1155.avi
+6 904 925
+trainingVideos/Seq03/output_Seq03_6_frame904-925.avi
+8 912 944
+trainingVideos/Seq03/output_Seq03_8_frame912-944.avi
+9 945 994
+trainingVideos/Seq03/output_Seq03_9_frame945-994.avi
+11 999 1053
+trainingVideos/Seq03/output_Seq03_11_frame999-1053.avi
+10 1065 1105
+trainingVideos/Seq03/output_Seq03_10_frame1065-1105.avi
+3 1107 1162
+trainingVideos/Seq03/output_Seq03_3_frame1107-1162.avi
+6 1113 1162
+trainingVideos/Seq03/output_Seq03_6_frame1113-1162.avi
+	 Processing file Seq06.zip
+6 1 13
+trainingVideos/Seq06/output_Seq06_6_frame1-13.avi
+1 61 92
+trainingVideos/Seq06/output_Seq06_1_frame61-92.avi
+2 109 132
+trainingVideos/Seq06/output_Seq06_2_frame109-132.avi
+3 157 184
+trainingVideos/Seq06/output_Seq06_3_frame157-184.avi
+5 197 219
+trainingVideos/Seq06/output_Seq06_5_frame197-219.avi
+4 241 274
+trainingVideos/Seq06/output_Seq06_4_frame241-274.avi
+2 287 301
+trainingVideos/Seq06/output_Seq06_2_frame287-301.avi
+6 288 315
+trainingVideos/Seq06/output_Seq06_6_frame288-315.avi
+6 318 342
+trainingVideos/Seq06/output_Seq06_6_frame318-342.avi
+6 347 381
+trainingVideos/Seq06/output_Seq06_6_frame347-381.avi
+6 398 457
+trainingVideos/Seq06/output_Seq06_6_frame398-457.avi
+7 486 512
+trainingVideos/Seq06/output_Seq06_7_frame486-512.avi
+6 537 574
+trainingVideos/Seq06/output_Seq06_6_frame537-574.avi
+8 627 694
+trainingVideos/Seq06/output_Seq06_8_frame627-694.avi
+9 722 756
+trainingVideos/Seq06/output_Seq06_9_frame722-756.avi
+10 768 801
+trainingVideos/Seq06/output_Seq06_10_frame768-801.avi
+11 811 855
+trainingVideos/Seq06/output_Seq06_11_frame811-855.avi
+6 886 913
+trainingVideos/Seq06/output_Seq06_6_frame886-913.avi
+3 886 904
+trainingVideos/Seq06/output_Seq06_3_frame886-904.avi
+6 612 623
+trainingVideos/Seq06/output_Seq06_6_frame612-623.avi
+8 627 693
+trainingVideos/Seq06/output_Seq06_8_frame627-693.avi
+9 723 756
+trainingVideos/Seq06/output_Seq06_9_frame723-756.avi
+10 772 801
+trainingVideos/Seq06/output_Seq06_10_frame772-801.avi
+11 808 855
+trainingVideos/Seq06/output_Seq06_11_frame808-855.avi
+The score for this prediction is 0.082762210037
