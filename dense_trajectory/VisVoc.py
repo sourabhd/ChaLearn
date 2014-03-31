@@ -30,7 +30,7 @@ class VisVoc(object):
         #print self.data
         self.kmeans = cluster.KMeans(init=self.init, n_clusters=self.voc_size, n_init=10, precompute_distances=True)
 
-        self.bench_k_means()
+#        self.bench_k_means()
 
         self.kmeans.fit(self.data)
         self.pred_labels = self.kmeans.predict(self.data)
@@ -42,7 +42,7 @@ class VisVoc(object):
 
         # Code from sklearn docs for visualization in case of 2-D data
         # Uncomment to visualize
-#        # Step size of the mesh. Decrease to increase the quality of the VQ.
+        # Step size of the mesh. Decrease to increase the quality of the VQ.
 #        h = .02     # point in the mesh [x_min, m_max]x[y_min, y_max].
 #
 #        # Plot the decision boundary. For that, we will assign a color to each
@@ -85,6 +85,9 @@ class VisVoc(object):
         estimator = self.kmeans
         t0 = time()
         estimator.fit(self.data)
+        print("n_clusters: %d, \t n_samples %d, \t n_features %d" % (self.voc_size, self.data.shape[0], self.data.shape[1]))
+        print(79 * '_')
+        print('% 9s' % 'init' '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
         print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
           % (str(self.init), (time() - t0), estimator.inertia_,
              metrics.homogeneity_score(self.gt_labels, estimator.labels_),
