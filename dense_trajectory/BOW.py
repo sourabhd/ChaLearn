@@ -16,14 +16,14 @@ import sys
 
 
 
-class VisVoc(object):
+class BOW(object):
     def __init__(self, data, voc_size, gt_labels):
         self.data = data
         self.voc_size = voc_size
         self.init = 'k-means++'
         self.gt_labels = gt_labels
         self.run_kmeans()
-        self.vector_quantize()
+        #self.vector_quantize()
 
     def run_kmeans(self):
         np.set_printoptions(threshold='nan')
@@ -78,9 +78,6 @@ class VisVoc(object):
 #        pl.yticks(())
 #        pl.show()
 
-    def vector_quantize(self):
-        self.vq_data = self.centroids[self.pred_labels]
-
     def bench_k_means(self):
         estimator = self.kmeans
         t0 = time()
@@ -98,3 +95,9 @@ class VisVoc(object):
              metrics.silhouette_score(self.data, estimator.labels_,
                                       metric='euclidean',
                                     )))
+
+
+    def calc_bow_representation(self,fv):
+        self.bow = sp.spatial.distance.cdist(fv,self.centroids,'euclidean')
+        print self.bow.shape
+
