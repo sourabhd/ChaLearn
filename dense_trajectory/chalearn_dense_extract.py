@@ -18,13 +18,27 @@ import sys, os, os.path,random,numpy,zipfile
 import cv2, subprocess
 from subprocess import Popen, PIPE
 from shutil import copyfile
+import scipy
+import scipy.io
+import scipy.stats
+from sklearn.svm import SVC
+from time import *
+import pickle
 
 from ChalearnLAPEvaluation import evalAction,exportGT_Action
 from ChalearnLAPSample import ActionSample
 
+from DenseTrajDesc import *
+from DenseTrajBOW import *
+
 denseTrajectoryExe = '../thirdparty/dense_trajectory_release_v1.2/release/DenseTrack'
 trainingVideos = 'trainingVideos'
 denseFeatures = 'denseFeatures'
+
+descHOG = []
+bowTraj = DenseTrajBOW()
+D = DenseTrajDesc() 
+model = SVC()
 
 def main():
     """ Main script. Show how to perform all competition steps """
@@ -45,11 +59,19 @@ def main():
     createDataSets(data,outTrain,outTest,0.3);
 
     # Learn your model
-    if os.path.exists("model.npy"):
-        model=numpy.load("model.npy");
-    else:
-        model=learnModel(outTrain);
-        numpy.save("model",model);
+#    if os.path.exists("model.npy"):
+#        model=numpy.load("model.npy");
+#    else:
+#        model=learnModel(outTrain);
+#        numpy.save("model",model);
+
+#    if os.path.exists("model.pkl"):
+#        model=pickle.load("model.pkl");
+#    else:
+#        model=learnModel(outTrain);
+#        pickle.dump(model,'model.pkl');
+
+    model=learnModel(outTrain);
 
     # Predict over test dataset
     predict(model,outTest,outPred);
@@ -115,9 +137,167 @@ def learnModel(data):
     samples=os.listdir(data);
 
     # Initialize the model
-    model=[];
+    #model=[];
+    model = None
 
-    # Access to each sample
+    yy = []
+    ff = []
+    wordIDs = None
+    words = None
+    t1 = time()
+
+    dataHOG  = None
+    fMap = {}
+    fMapS = []
+    featureVectorNum = 0
+    if not os.path.exists("Features.mat"):
+        # Access to each sample
+        for file in samples:
+            if not file.endswith(".zip"):
+                continue;
+            print("\t Processing file " + file)
+
+            # Create the object to access the sample
+            smp=ActionSample(os.path.join(data,file));
+
+            # ###############################################
+            # USE Ground Truth information to learn the model
+            # ###############################################
+
+            # Get the list of actions for this frame
+            actionList=smp.getActions();
+
+            # Iterate for each action in this sample
+            proc = {}
+            stdout = {}
+            stderr = {}
+            for action in actionList:
+                # Get the action ID, and start and end frames for the action
+                actionID,startFrame,endFrame=action;
+                print 'Action: ', actionID, '\t', 'startFrame: ', startFrame, '\t', 'endFrame:', endFrame
+                #output = subprocess.check_output('/bin/ps')
+                #print output
+                #print denseTrajectoryExe, os.path.splitext(file)[0], startFrame, endFrame
+                #cmd = []
+                #cmd.append(denseTrajectoryExe)
+                #seqn = os.path.splitext(file)[0];
+                #cmd.append('training/train/%s/%s_color.mp4' % (seqn,seqn))
+                #cmd.append('-S')
+                #cmd.append(str(startFrame))
+                #cmd.append('-E')
+                #cmd.append(str(endFrame))
+                #print cmd
+                #proc[actionID] = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                #stdout[actionID], stderr[actionID] = proc[actionID].communicate()
+                #for line in stdout[actionID]:
+                #    print line,
+                # NOTE: We use random predictions on this example, therefore, nothing is done with the image. No model is learnt.
+                # Iterate frame by frame to get the information to learn the model
+                seqn = os.path.splitext(file)[0]
+                actionFileName = "output_%s_%d_frame%d-%d.avi" % (seqn,actionID,startFrame,endFrame)
+                actionFileFullName = "%s%s%s%s%s" % (trainingVideos,os.path.sep,seqn, os.path.sep, actionFileName)
+                featureFileName = "densetr_%s_%d_frame%d-%d.txt" % (seqn,actionID,startFrame,endFrame)
+                featureFileFullName = "%s%s%s%s%s" % (denseFeatures,os.path.sep,seqn, os.path.sep, featureFileName)
+
+                #if not os.path.exists(featureFileFullName):
+                #    continue
+
+                if not os.path.exists(actionFileFullName):
+                    print actionFileFullName + ' not present'
+                    continue
+
+                if not os.path.exists(featureFileFullName):
+                    fout = open(featureFileFullName,"w")
+                    cmd = []
+                    cmd.append(denseTrajectoryExe)
+                    seqn = os.path.splitext(file)[0];
+                    cmd.append(actionFileFullName)
+                    print cmd
+                    proc[actionID] = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                    #proc[actionID].stdout.flush()
+                    #proc[actionID].stderr.flush()
+                    stdout[actionID], stderr[actionID] = proc[actionID].communicate()
+                    fout.write(stdout[actionID])
+                    fout.close()
+
+                if not os.path.exists('Features.mat'):
+                    fin = open(featureFileFullName,"r")
+                    for line in fin:
+                        D.read(line)
+                        fMap[(actionID, startFrame, endFrame)] = featureVectorNum
+                        descHOG.append(D.HOG)
+                        fMapSTuple = (actionID, startFrame, endFrame, featureVectorNum)
+                        fMapS.append(fMapSTuple)
+                        featureVectorNum = featureVectorNum + 1 
+                        #yy.append(actionID)
+                        #ff.append(D.frameNum)
+                        #break
+                    fin.close()
+            #y = numpy.array(yy)
+            #frameNum = numpy.array(ff)
+               
+                #break # TODO: remove
+                #for numFrame in range(startFrame,endFrame):
+                    # Get the image for this frame
+                    #image=smp.getRGB(numFrame);
+                    
+                    #img = cv2.cv.fromarray(image)
+                    #print type(img)
+                    #print actionName
+                    #cv2.imshow(actionName,image)
+                    #cv2.waitKey(10)
+            # ###############################################
+            # Remove the sample object
+            del smp;
+            #break # TODO: remove
+        if not os.path.exists('Features.mat'):
+            if descHOG:
+                dataHOG = scipy.vstack(tuple(descHOG))
+                fMapSr = scipy.vstack(tuple(fMapS))
+                #scipy.io.savemat('Features.mat', {'frameNum':frameNum,'y':y, 'HOG':dataHOG}, format='5')
+                scipy.io.savemat('Features.mat', {'fMap':fMapSr, 'HOG':dataHOG}, format='5')
+
+    else:
+        dct = {}
+        print 'Loading pre calculated features'
+        scipy.io.loadmat('Features.mat',dct)
+        #y = dct['y']
+        dataHOG = dct['HOG']
+        fMapSr = dct['fMap']
+        for t in fMapSr:
+            fMap[(t[0],t[1],t[2])] = t[3]
+        #frameNum = dct['frameNum']
+
+    t2 = time()
+    print 'Dense Trajectory Feature Extraction: %f seconds' % (t2-t1) 
+
+    # Extract words
+    if not os.path.exists("BOWFeatures.mat"):
+        bowTraj.build(dataHOG,None,None,None)
+        wordIDs = bowTraj.bowHOG.pred_labels
+        words  = bowTraj.bowHOG.centroids
+        #print wordIDs # nearest centroid for word 
+        #print words   # centroids
+        #t3 = time()
+        #$print 'BoW build : %f seconds' % (t3-t2)
+        #X = bowTraj.calcFeatures(dataHOG,None,None,None)
+        #t4 = time()
+        scipy.io.savemat('BOWFeatures.mat', {'X':X,'words':words,'wordIDs':wordIDs}, format='5')
+    else:
+        dct2 = {}
+        scipy.io.loadmat('BOWFeatures.mat', dct2, format='5')
+        X = dct2['X']
+        wordIDs = dct2['wordIDs']
+        words = dct2['words']  #centroids
+
+    print 'words.shape', words.shape
+    print 'wordIDs.shape', wordIDs.shape
+
+    t3 = time()
+    print 'Quantization into words : %f seconds' % (t3-t2)
+
+    # Now we create feature vectors
+    print 'Creating feature vectors'
     for file in samples:
         if not file.endswith(".zip"):
             continue;
@@ -126,101 +306,120 @@ def learnModel(data):
         # Create the object to access the sample
         smp=ActionSample(os.path.join(data,file));
 
-        # ###############################################
-        # USE Ground Truth information to learn the model
-        # ###############################################
-
         # Get the list of actions for this frame
         actionList=smp.getActions();
 
-        # Iterate for each action in this sample
-        proc = {}
-        stdout = {}
-        stderr = {}
         for action in actionList:
             # Get the action ID, and start and end frames for the action
             actionID,startFrame,endFrame=action;
-            print actionID, startFrame, endFrame
-            #output = subprocess.check_output('/bin/ps')
-            #print output
-            #print denseTrajectoryExe, os.path.splitext(file)[0], startFrame, endFrame
-            #cmd = []
-            #cmd.append(denseTrajectoryExe)
-            #seqn = os.path.splitext(file)[0];
-            #cmd.append('training/train/%s/%s_color.mp4' % (seqn,seqn))
-            #cmd.append('-S')
-            #cmd.append(str(startFrame))
-            #cmd.append('-E')
-            #cmd.append(str(endFrame))
-            #print cmd
-            #proc[actionID] = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            #stdout[actionID], stderr[actionID] = proc[actionID].communicate()
-            #for line in stdout[actionID]:
-            #    print line,
-            # NOTE: We use random predictions on this example, therefore, nothing is done with the image. No model is learnt.
-            # Iterate frame by frame to get the information to learn the model
+            print 'PASS 2: ', 'Action: ', actionID, '\t', 'startFrame: ', startFrame, '\t', 'endFrame:', endFrame
             seqn = os.path.splitext(file)[0]
-            actionFileName = "output_%s_%d_frame%d-%d.avi" % (seqn,actionID,startFrame,endFrame)
-            actionFileFullName = "%s%s%s%s%s" % (trainingVideos,os.path.sep,seqn, os.path.sep, actionFileName)
             featureFileName = "densetr_%s_%d_frame%d-%d.txt" % (seqn,actionID,startFrame,endFrame)
             featureFileFullName = "%s%s%s%s%s" % (denseFeatures,os.path.sep,seqn, os.path.sep, featureFileName)
+            if not os.path.exists(featureFileFullName):
+                continue
+            print fMap[(actionID,startFrame,endFrame)]
+            #X = bowTraj.calcFeatures(dataActionHOG,None,None,None)
+
+    t4 = time()
+    print 'BoW calc features %f seconds', (t4-t3)
+    sys.exit(0)
+    clf = SVC(kernel='rbf')
+    clf.fit(X,y)
+    t5 = time()
+    print 'SVM train : %f seconds', (t5-t4)
+
+        #numpy.savez('model', X=X, y=y, clf=clf)
+        #scipy.io.savemat('model.mat', {'X':X,'y':y,'clf':clf}, format='5')
+    model = clf;
+#    # Return the model
+    return model;
+
+def predict(model,data,output):
+    """ Access the sample information to predict the pose. """
+
+    actionID = 0 #initialize
+    # Get the list of training samples
+    samples=os.listdir(data);
+    print samples
+
+    # Access to each sample
+    for file in samples:
+        # Create the object to access the sample
+        smp=ActionSample(os.path.join(data,file));
+        print file
+
+        # Create a random set of actions for this sample
+        numFrame=0;
+        pred=[];
+        seqn = os.path.splitext(file)[0];
+        while numFrame<smp.getNumFrames():
+            # Generate an initial displacement
+            #start=numFrame+random.randint(1,100);
+            start = numFrame
+
+            # Generate the action duration
+            #end=min(start+random.randint(10,100),smp.getNumFrames());
+            end = min(numFrame + 15,smp.getNumFrames())
+
+
+            actionFileName = "test_%s_frame%d-%d.avi" % (seqn,start,end)
+            actionFileFullName = "%s%s%s%s%s" % (trainingVideos,os.path.sep,seqn, os.path.sep, actionFileName)
+
+            w=int(smp.rgb.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
+            h=int(smp.rgb.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
+            fps=int(smp.rgb.get(cv2.cv.CV_CAP_PROP_FPS))
+        
+            out = cv2.VideoWriter(actionFileFullName,cv2.cv.CV_FOURCC('X','V','I','D'),fps,(w,h))
+     	
+            for n in range(start,end):
+        	    image=smp.getRGB(n+1);
+        	    #print type(image)
+        	    #print n
+        	    #img=cv2.cv.fromarray(image)
+        	    #cv2.imshow('my',image)
+        	    #cv2.waitKey(10)
+        	    #print type(img)
+        	    out.write(image)
+            out.release()
+
+            featureFileName = "densetr_%s_frame%d-%d.txt" % (seqn,start,end)
+            featureFileFullName = "%s%s%s%s%s" % (denseFeatures,os.path.sep,seqn, os.path.sep, featureFileName)
+
+            #if not os.path.exists(featureFileFullName):
+            #    continue
+
             fout = open(featureFileFullName,"w")
 
-            print actionFileFullName
+            print featureFileFullName
 
             cmd = []
             cmd.append(denseTrajectoryExe)
             seqn = os.path.splitext(file)[0];
             cmd.append(actionFileFullName)
             print cmd
-            proc[actionID] = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             #proc[actionID].stdout.flush()
             #proc[actionID].stderr.flush()
-            stdout[actionID], stderr[actionID] = proc[actionID].communicate()
-            fout.write(stdout[actionID])
+            stdout, stderr = proc.communicate()
+            fout.write(stdout)
             fout.close()
-            #for line in stdout[actionID]:
-            #    print line,
-            
-            #for numFrame in range(startFrame,endFrame):
-                # Get the image for this frame
-                #image=smp.getRGB(numFrame);
-                
-                #img = cv2.cv.fromarray(image)
-                #print type(img)
-                #print actionName
-                #cv2.imshow(actionName,image)
-                #cv2.waitKey(10)
-        # ###############################################
-        # Remove the sample object
-        del smp;
 
-    # Return the model
-    return model;
+            if not os.path.exists(featureFileFullName):
+                continue
 
-def predict(model,data,output):
-    """ Access the sample information to predict the pose. """
-
-    # Get the list of training samples
-    samples=os.listdir(data);
-
-    # Access to each sample
-    for file in samples:
-        # Create the object to access the sample
-        smp=ActionSample(os.path.join(data,file));
-
-        # Create a random set of actions for this sample
-        numFrame=0;
-        pred=[];
-        while numFrame<smp.getNumFrames():
-            # Generate an initial displacement
-            start=numFrame+random.randint(1,100);
-
-            # Generate the action duration
-            end=min(start+random.randint(10,100),smp.getNumFrames());
+            fin = open(featureFileFullName,"r")
+            for line in fin:
+                D.read(line)
+                descHOG.append(D.HOG)
+                X = bowTraj.calcFeatures(scipy.vstack(tuple(D.HOG)))
+                actionID = model.predict(X)
+            fin.close()
+          
 
             # Generate the action ID
-            actionID=random.randint(1,11);
+            #actionID=random.randint(1,11);
+
 
             # Check if the number of frames are correct
             if start<end-1 and end<smp.getNumFrames():
@@ -229,6 +428,8 @@ def predict(model,data,output):
 
             # Move ahead
             numFrame=end+1;
+
+
 
         # Store the prediction
         smp.exportPredictions(pred,output);

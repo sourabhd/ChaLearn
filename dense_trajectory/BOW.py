@@ -17,7 +17,8 @@ import sys
 
 
 class BOW(object):
-    def __init__(self, data, voc_size, gt_labels):
+
+    def vq(self, data, voc_size, gt_labels):
         self.data = data
         self.voc_size = voc_size
         self.init = 'k-means++'
