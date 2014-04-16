@@ -13,10 +13,10 @@ class DenseTrajBOW:
         self.dimMBFx = 96
         self.dimMBFy = 96
 
-        self.vocszHOG = 32
-        self.vocszHOF = 32
-        self.vocszMBFx = 32
-        self.vocszMBFy = 32
+        self.vocszHOG = 128
+        self.vocszHOF = 128
+        self.vocszMBFx = 128
+        self.vocszMBFy = 128
 
     def build(self,dataHOG,dataHOF,dataMBFx,dataMBFy):
         self.bowHOG.vq(data=dataHOG,voc_size=self.vocszHOG,gt_labels=None)

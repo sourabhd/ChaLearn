@@ -22,6 +22,7 @@ import scipy
 import scipy.io
 import scipy.stats
 from sklearn.svm import SVC
+from sklearn.metrics.pairwise import chi2_kernel
 from time import *
 import pickle
 
@@ -30,10 +31,16 @@ from ChalearnLAPSample import ActionSample
 
 from DenseTrajDesc import *
 from DenseTrajBOW import *
+from getNoActionList import *
+
+from collections import defaultdict
+
 
 denseTrajectoryExe = '../thirdparty/dense_trajectory_release_v1.2/release/DenseTrack'
 trainingVideos = 'trainingVideos'
 denseFeatures = 'denseFeatures'
+
+NumActions = 11
 
 descHOG = []
 bowTraj = DenseTrajBOW()
@@ -103,7 +110,7 @@ def createDataSets(dataPath,trainPath,testPath,testPer):
     numTrain=numSamples-numTest;
 
     # Create a random permutation of the samples
-    random.shuffle(sampleList);
+    #random.shuffle(sampleList);
 
     # Create the output partitions
     if os.path.exists(trainPath):
@@ -135,6 +142,7 @@ def learnModel(data):
     print("Learning the model");
     # Get the list of training samples
     samples=os.listdir(data);
+    #samples = ['Seq01.zip', 'Seq03.zip', 'Seq04.zip'];  # Hard coded for experiments
 
     # Initialize the model
     #model=[];
@@ -150,6 +158,10 @@ def learnModel(data):
     fMap = {}
     fMapS = []
     featureVectorNum = 0
+    fMap = defaultdict(list)
+
+    print 'Training Set: ', samples
+
     if not os.path.exists("Features.mat"):
         # Access to each sample
         for file in samples:
@@ -171,6 +183,16 @@ def learnModel(data):
             proc = {}
             stdout = {}
             stderr = {}
+
+
+            print actionList
+            sortedActionList  = sorted(actionList)
+
+            noActionList = getNoActionList(sortedActionList)
+            for nal in noActionList:
+                actionList.append([NumActions+1,nal[0],nal[1]])
+            # continue
+
             for action in actionList:
                 # Get the action ID, and start and end frames for the action
                 actionID,startFrame,endFrame=action;
@@ -206,7 +228,11 @@ def learnModel(data):
                     print actionFileFullName + ' not present'
                     continue
 
-                if not os.path.exists(featureFileFullName):
+                if os.path.exists(featureFileFullName) and os.path.getsize(featureFileFullName) > 0:
+                    print featureFileFullName, ' exists'
+                elif endFrame - startFrame + 1 <= 15:
+                    print featureFileFullName, 'too small' 
+                else:
                     fout = open(featureFileFullName,"w")
                     cmd = []
                     cmd.append(denseTrajectoryExe)
@@ -219,20 +245,20 @@ def learnModel(data):
                     stdout[actionID], stderr[actionID] = proc[actionID].communicate()
                     fout.write(stdout[actionID])
                     fout.close()
-
-                if not os.path.exists('Features.mat'):
-                    fin = open(featureFileFullName,"r")
-                    for line in fin:
-                        D.read(line)
-                        fMap[(actionID, startFrame, endFrame)] = featureVectorNum
-                        descHOG.append(D.HOG)
-                        fMapSTuple = (actionID, startFrame, endFrame, featureVectorNum)
-                        fMapS.append(fMapSTuple)
-                        featureVectorNum = featureVectorNum + 1 
-                        #yy.append(actionID)
-                        #ff.append(D.frameNum)
-                        #break
-                    fin.close()
+                #if not os.path.exists('Features.mat'):
+                fin = open(featureFileFullName,"r")
+                for line in fin:
+                    D.read(line)
+                    #print 'featureVectorNum: ', featureVectorNum
+                    fMap[(actionID, startFrame, endFrame)].append(featureVectorNum)
+                    descHOG.append(D.HOG)
+                    fMapSTuple = (actionID, startFrame, endFrame, featureVectorNum)
+                    fMapS.append(fMapSTuple)
+                    featureVectorNum = featureVectorNum + 1 
+                    #yy.append(actionID)
+                    #ff.append(D.frameNum)
+                    #break
+                fin.close()
             #y = numpy.array(yy)
             #frameNum = numpy.array(ff)
                
@@ -265,7 +291,7 @@ def learnModel(data):
         dataHOG = dct['HOG']
         fMapSr = dct['fMap']
         for t in fMapSr:
-            fMap[(t[0],t[1],t[2])] = t[3]
+            fMap[(t[0],t[1],t[2])].append(t[3])
         #frameNum = dct['frameNum']
 
     t2 = time()
@@ -282,11 +308,10 @@ def learnModel(data):
         #$print 'BoW build : %f seconds' % (t3-t2)
         #X = bowTraj.calcFeatures(dataHOG,None,None,None)
         #t4 = time()
-        scipy.io.savemat('BOWFeatures.mat', {'X':X,'words':words,'wordIDs':wordIDs}, format='5')
+        scipy.io.savemat('BOWFeatures.mat', {'words':words,'wordIDs':wordIDs}, format='5')
     else:
         dct2 = {}
-        scipy.io.loadmat('BOWFeatures.mat', dct2, format='5')
-        X = dct2['X']
+        dct2 = scipy.io.loadmat('BOWFeatures.mat')
         wordIDs = dct2['wordIDs']
         words = dct2['words']  #centroids
 
@@ -298,6 +323,9 @@ def learnModel(data):
 
     # Now we create feature vectors
     print 'Creating feature vectors'
+    XX = []
+    yy = []
+    print 'Training Set: ', samples
     for file in samples:
         if not file.endswith(".zip"):
             continue;
@@ -308,24 +336,53 @@ def learnModel(data):
 
         # Get the list of actions for this frame
         actionList=smp.getActions();
+        noActionList = getNoActionList(sorted(actionList))
+        for nal in noActionList:
+            actionList.append([NumActions+1,nal[0],nal[1]])
 
+        cnt = 0
         for action in actionList:
+            cnt = cnt + 1 
             # Get the action ID, and start and end frames for the action
             actionID,startFrame,endFrame=action;
-            print 'PASS 2: ', 'Action: ', actionID, '\t', 'startFrame: ', startFrame, '\t', 'endFrame:', endFrame
+            print 'PASS 2: ',  cnt, ' : ', 'Action: ', actionID, '\t', 'startFrame: ', startFrame, '\t', 'endFrame:', endFrame
+            h = numpy.zeros(bowTraj.vocszHOG)
             seqn = os.path.splitext(file)[0]
             featureFileName = "densetr_%s_%d_frame%d-%d.txt" % (seqn,actionID,startFrame,endFrame)
             featureFileFullName = "%s%s%s%s%s" % (denseFeatures,os.path.sep,seqn, os.path.sep, featureFileName)
             if not os.path.exists(featureFileFullName):
+                print featureFileFullName, ' does not exist' 
+                yy.append(actionID)
+                XX.append(h)
                 continue
-            print fMap[(actionID,startFrame,endFrame)]
-            #X = bowTraj.calcFeatures(dataActionHOG,None,None,None)
-
+            htot = 0
+            if (actionID,startFrame,endFrame) in fMap:
+               # print (actionID,startFrame,endFrame), fMap[(actionID,startFrame,endFrame)]
+                for fID in  fMap[(actionID,startFrame,endFrame)]:
+                    idx = wordIDs[fID]
+                    h[idx] = h[idx] + 1
+                    htot = htot + 1
+            if htot > 0:
+                h = (1.0 / float(htot)) * h
+                #print h
+            yy.append(actionID)
+            XX.append(h)
+    X = scipy.vstack(tuple(XX))
+    y = numpy.array(yy)
+    #print X
+    #print y
+    #X = bowTraj.calcFeatures(dataActionHOG,None,None,None)
+            
     t4 = time()
-    print 'BoW calc features %f seconds', (t4-t3)
-    sys.exit(0)
-    clf = SVC(kernel='rbf')
+    print 'BoW histogram creation for training samples', (t4-t3)
+    
+   # sys.exit(0)
+
+    #  Create chi squared SVM kernel model
+
+    clf = SVC(kernel=chi2_kernel)
     clf.fit(X,y)
+    print clf
     t5 = time()
     print 'SVM train : %f seconds', (t5-t4)
 
@@ -360,7 +417,7 @@ def predict(model,data,output):
 
             # Generate the action duration
             #end=min(start+random.randint(10,100),smp.getNumFrames());
-            end = min(numFrame + 15,smp.getNumFrames())
+            end = min(numFrame+30,smp.getNumFrames())
 
 
             actionFileName = "test_%s_frame%d-%d.avi" % (seqn,start,end)
@@ -370,18 +427,20 @@ def predict(model,data,output):
             h=int(smp.rgb.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
             fps=int(smp.rgb.get(cv2.cv.CV_CAP_PROP_FPS))
         
-            out = cv2.VideoWriter(actionFileFullName,cv2.cv.CV_FOURCC('X','V','I','D'),fps,(w,h))
-     	
-            for n in range(start,end):
-        	    image=smp.getRGB(n+1);
-        	    #print type(image)
-        	    #print n
-        	    #img=cv2.cv.fromarray(image)
-        	    #cv2.imshow('my',image)
-        	    #cv2.waitKey(10)
-        	    #print type(img)
-        	    out.write(image)
-            out.release()
+            if os.path.exists(actionFileFullName) and os.path.getsize(actionFileFullName) > 0:
+                print actionFileFullName, ' exists'
+            else:
+                out = cv2.VideoWriter(actionFileFullName,cv2.cv.CV_FOURCC('X','V','I','D'),fps,(w,h))
+                for n in range(start,end):
+                    image=smp.getRGB(n+1);
+                    #print type(image)
+                    #print n
+                    #img=cv2.cv.fromarray(image)
+                    #cv2.imshow('my',image)
+                    #cv2.waitKey(10)
+                    #print type(img)
+                    out.write(image)
+                out.release()
 
             featureFileName = "densetr_%s_frame%d-%d.txt" % (seqn,start,end)
             featureFileFullName = "%s%s%s%s%s" % (denseFeatures,os.path.sep,seqn, os.path.sep, featureFileName)
@@ -389,32 +448,47 @@ def predict(model,data,output):
             #if not os.path.exists(featureFileFullName):
             #    continue
 
-            fout = open(featureFileFullName,"w")
+            if os.path.exists(featureFileFullName) and os.path.getsize(featureFileFullName) > 0:
+                print featureFileFullName, ' exists'
+            else:
+                fout = open(featureFileFullName,"w")
+                print featureFileFullName
+                cmd = []
+                cmd.append(denseTrajectoryExe)
+                seqn = os.path.splitext(file)[0];
+                cmd.append(actionFileFullName)
+                print cmd
+                proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                #proc[actionID].stdout.flush()
+                #proc[actionID].stderr.flush()
+                stdout, stderr = proc.communicate()
+                fout.write(stdout)
+                fout.close()
 
-            print featureFileFullName
-
-            cmd = []
-            cmd.append(denseTrajectoryExe)
-            seqn = os.path.splitext(file)[0];
-            cmd.append(actionFileFullName)
-            print cmd
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            #proc[actionID].stdout.flush()
-            #proc[actionID].stderr.flush()
-            stdout, stderr = proc.communicate()
-            fout.write(stdout)
-            fout.close()
-
+            hst = numpy.zeros(bowTraj.vocszHOG)
             if not os.path.exists(featureFileFullName):
+                print featureFileFullName, ' not found'
                 continue
-
+            htot = 0
             fin = open(featureFileFullName,"r")
             for line in fin:
                 D.read(line)
-                descHOG.append(D.HOG)
-                X = bowTraj.calcFeatures(scipy.vstack(tuple(D.HOG)))
-                actionID = model.predict(X)
+                #descHOG.append(D.HOG)
+                #X = bowTraj.calcFeatures(scipy.vstack(tuple(D.HOG)))
+                #actionID = model.predict(X)
+                idx = bowTraj.bowHOG.kmeans.predict(D.HOG)
+                hst[idx] = hst[idx] + 1
+                htot = htot + 1
+            if htot > 0:
+                hst = (1.0 / float(htot)) * hst
+
+
             fin.close()
+            print 'Retrieved model:'
+            print model
+            actionID = model.predict(hst)[0]
+            print hst
+            print 'Predicted: ', actionID
           
 
             # Generate the action ID
@@ -427,7 +501,8 @@ def predict(model,data,output):
                 pred.append([actionID,start,end])
 
             # Move ahead
-            numFrame=end+1;
+            #numFrame=end+1;
+            numFrame=start+15;
 
 
 
