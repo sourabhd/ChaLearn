@@ -70,7 +70,7 @@ if max(RM(:)) > 0.2
             x_e = x_b+size(kkk,1)-1;
         end
         if x_e > floor(size(RM,1))
-            x_e = floor(size(RM,1));
+            x_e = int32(floor(size(RM,1)));
             x_b = x_e-size(kkk,1)+1;
         end
 
@@ -79,8 +79,26 @@ if max(RM(:)) > 0.2
             y_e = y_b+size(kkk,2)-1;
         end
         if y_e > floor(size(RM,2))
-            y_e = floor(size(RM,2));
+            y_e = int32(floor(size(RM,2)));
             y_b = y_e-size(kkk,2)+1;
+        end
+        if x_b <= 0
+            x_b = 1;
+        end
+        if y_b <= 0
+            y_b = 1;
+        end
+        if x_b <= 0
+            x_b = 1;
+        end
+        if y_b <= 0
+            y_b = 1;
+        end
+        if x_e <= 0
+            x_e = 1;
+        end
+        if y_e <= 0
+            y_e = 1;
         end
 %         RM3(x_b:x_e,y_b:y_e) = RM2(x_b:x_e,y_b:y_e);
         RM2(x_b:x_e,y_b:y_e) = RM1(x_b:x_e,y_b:y_e).*kkk(1:size(RM1(x_b:x_e,y_b:y_e),1),1:size(RM1(x_b:x_e,y_b:y_e),2));
