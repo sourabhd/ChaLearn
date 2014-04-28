@@ -3,7 +3,7 @@ P = zeros(0,1);
 st = 600;
 j = st;
 
-figure;
+f1 =  figure;
 
 for i = 1:size(RV,3)
     sc(cat(3,RV(:,:,i),T(:,:,i)),'prob_jet'); colormap; c = caxis; P =[ P; c(2)];
@@ -11,7 +11,7 @@ for i = 1:size(RV,3)
     pause(0.1);
 end
 
-figure;
+f2 = figure;
 axes;
 plot(X(20:end-20),P(20:end-20)),ylabel('RV score'),xlabel('Frame number'),title('Single Example method: query for action class 9 from Seq 1 on Seq 2')
 hold on;
